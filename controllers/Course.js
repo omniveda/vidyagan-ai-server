@@ -4,6 +4,7 @@ const Section = require("../models/Section");
 const SubSection = require("../models/SubSection");
 const User = require("../models/User");
 const { uploadImageToCloudinary } = require("../utils/imageUploader");
+const { uploadPdfToLocal } = require("../utils/pdfUploader");
 const CourseProgress = require("../models/CourseProgress");
 const { convertSecondsToDuration } = require("../utils/secToDuration");
 
@@ -24,6 +25,7 @@ exports.createCourse = async (req, res) => {
     } = req.body;
 
     const thumbnail = req.files?.thumbnailImage;
+    const ebook = req.files?.ebook;
 
     // Add error handling for JSON parsing
     let tag;
@@ -87,6 +89,22 @@ exports.createCourse = async (req, res) => {
     );
     console.log(thumbnailImage);
 
+    // Upload ebook if provided
+    let ebookUrl = null;
+    if (ebook) {
+      console.log("Ebook file found:", {
+        name: ebook.name,
+        size: ebook.size,
+        mimetype: ebook.mimetype
+      });
+      const ebookPdf = await uploadPdfToLocal(
+        ebook,
+        'course-ebooks'
+      );
+      ebookUrl = ebookPdf.secure_url;
+      console.log("Ebook URL saved:", ebookUrl);
+    }
+
     const newCourse = await Course.create({
       courseName,
       courseDescription,
@@ -96,6 +114,7 @@ exports.createCourse = async (req, res) => {
       tag,
       category: categoryDetails._id,
       thumbnail: thumbnailImage.secure_url,
+      ebook: ebookUrl,
       status,
       instructions,
     });
@@ -267,11 +286,30 @@ exports.editCourse = async (req, res) => {
     if (req.files) {
       console.log("thumbnail update");
       const thumbnail = req.files.thumbnailImage;
-      const thumbnailImage = await uploadImageToCloudinary(
-        thumbnail,
-        process.env.FOLDER_NAME
-      );
-      course.thumbnail = thumbnailImage.secure_url;
+      if (thumbnail) {
+        const thumbnailImage = await uploadImageToCloudinary(
+          thumbnail,
+          process.env.FOLDER_NAME
+        );
+        course.thumbnail = thumbnailImage.secure_url;
+      }
+
+      // If ebook is found, update it
+      const ebook = req.files.ebook;
+      if (ebook) {
+        console.log("ebook update");
+        console.log("Ebook file found:", {
+          name: ebook.name,
+          size: ebook.size,
+          mimetype: ebook.mimetype
+        });
+        const ebookPdf = await uploadPdfToLocal(
+          ebook,
+          'course-ebooks'
+        );
+        course.ebook = ebookPdf.secure_url;
+        console.log("Updated ebook URL:", course.ebook);
+      }
     }
 
     // Update only the fields that are present in the request body

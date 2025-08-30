@@ -30,6 +30,9 @@ const coursesSchema = new mongoose.Schema({
 	thumbnail: {
 		type: String,
 	},
+	ebook: {
+		type: String, // URL to the PDF file
+	},
 	tag: {
 		type: [String],
 		required: true,
