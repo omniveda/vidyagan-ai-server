@@ -19,6 +19,7 @@ const pageRoutes = require("./routes/PageRoutes");
 
 const notificationRoutes = require("./routes/Notification"); // New notification routes
 const liveSessionRoutes = require("./routes/LiveSession"); // Live session routes
+const mcqRoutes = require("./routes/MCQ"); // MCQ routes
 const { servePdf } = require("./utils/pdfUploader");
 
 dotenv.config();
@@ -64,6 +65,7 @@ app.use("/api/v1/pages", pageRoutes);
 
 app.use("/api/v1/notifications", notificationRoutes); // New notification routes
 app.use("/api/v1/live-sessions", liveSessionRoutes); // Live session routes
+app.use("/api/v1/mcq", mcqRoutes); // MCQ routes
 
 // PDF serving route
 app.get("/uploads/:folder/:filename", servePdf);
