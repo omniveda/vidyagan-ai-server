@@ -9,28 +9,43 @@ exports.createSubSection = async (req, res) => {
   try {
     // Extract necessary information from the request body
     const { sectionId, title, description } = req.body
-    const video = req.files.video
+    const video = req.files ? req.files.video : undefined
+    const pdf = req.files ? req.files.pdf : undefined
 
-    // Check if all necessary fields are provided
-    if (!sectionId || !title || !description || !video) {
+    // Check if required fields except video/pdf are provided
+    if (!sectionId || !title || !description) {
       return res
         .status(404)
-        .json({ success: false, message: "All Fields are Required" })
+        .json({ success: false, message: "SectionId, title and description are required" })
     }
-    console.log(video)
 
-    // Upload the video file to Cloudinary
-    const uploadDetails = await uploadImageToCloudinary(
-      video,
-      process.env.FOLDER_NAME
-    )
-    console.log(uploadDetails)
+    let videoUrl = undefined
+    let timeDuration = undefined
+    if (video) {
+      // Upload the video file to Cloudinary
+      const uploadDetails = await uploadImageToCloudinary(
+        video,
+        process.env.FOLDER_NAME
+      )
+      videoUrl = uploadDetails.secure_url
+      timeDuration = `${uploadDetails.duration}`
+    }
+
+    let pdfUrl = undefined
+    if (pdf) {
+      // Save PDF locally in uploads/course-ebooks/
+      const pdfPath = `uploads/course-ebooks/${Date.now()}_${pdf.name}`
+      await pdf.mv(pdfPath)
+      pdfUrl = `/${pdfPath}`
+    }
+
     // Create a new sub-section with the necessary information
     const SubSectionDetails = await SubSection.create({
       title: title,
-      timeDuration: `${uploadDetails.duration}`,
+      timeDuration: timeDuration,
       description: description,
-      videoUrl: uploadDetails.secure_url,
+      videoUrl: videoUrl,
+      pdfUrl: pdfUrl,
     })
 
     // Update the corresponding section with the newly created sub-section
@@ -80,6 +95,14 @@ exports.updateSubSection = async (req, res) => {
       )
       subSection.videoUrl = uploadDetails.secure_url
       subSection.timeDuration = `${uploadDetails.duration}`
+    }
+
+    if (req.files && req.files.pdf !== undefined) {
+      const pdf = req.files.pdf
+      // Save PDF locally in uploads/course-ebooks/
+      const pdfPath = `uploads/course-ebooks/${Date.now()}_${pdf.name}`
+      await pdf.mv(pdfPath)
+      subSection.pdfUrl = `/${pdfPath}`
     }
 
     await subSection.save()
