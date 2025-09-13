@@ -101,6 +101,7 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const bcrypt = require("bcrypt");
 const User = require("../models/User");
+const Profile = require("../models/Profile");
 
 dotenv.config();
 
@@ -120,6 +121,15 @@ async function createAdmin() {
       return;
     }
 
+    // Create a Profile for the admin
+    const adminProfile = new Profile({
+      gender: "Not specified",
+      dateOfBirth: null,
+      about: "Admin account",
+      contactNumber: 1234567890, // Dummy number
+    });
+    await adminProfile.save();
+
     // Hash the admin password
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
@@ -130,7 +140,8 @@ async function createAdmin() {
       accountType: "Admin", // Ensure the accountType is Admin
       firstName: "Admin", // Provide a default first name
       lastName: "User", // Provide a default last name
-      additionalDetails: "Admin account", // Provide default additional details
+      additionalDetails: adminProfile._id, // Use the Profile ObjectId
+      contactNumber: "+1234567890", // Required contact number
     });
 
     // Save the admin user to the database

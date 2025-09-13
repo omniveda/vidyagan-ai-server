@@ -34,9 +34,15 @@ exports.createSubSection = async (req, res) => {
     let pdfUrl = undefined
     if (pdf) {
       // Save PDF locally in uploads/course-ebooks/
-      const pdfPath = `uploads/course-ebooks/${Date.now()}_${pdf.name}`
-      await pdf.mv(pdfPath)
-      pdfUrl = `/${pdfPath}`
+      const pdfFileName = `course-ebooks_${Date.now()}_${pdf.name}`
+      const pdfPath = `../uploads/course-ebooks/${pdfFileName}`
+      await new Promise((resolve, reject) => {
+        pdf.mv(pdfPath, (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+      pdfUrl = `/uploads/course-ebooks/${pdfFileName}`
     }
 
     // Create a new sub-section with the necessary information
@@ -88,9 +94,9 @@ exports.updateSubSection = async (req, res) => {
       subSection.description = description
     }
     if (req.files && req.files.video !== undefined) {
-      const video = req.files.video
+      const videoFile = req.files.video
       const uploadDetails = await uploadImageToCloudinary(
-        video,
+        videoFile,
         process.env.FOLDER_NAME
       )
       subSection.videoUrl = uploadDetails.secure_url
@@ -101,7 +107,12 @@ exports.updateSubSection = async (req, res) => {
       const pdf = req.files.pdf
       // Save PDF locally in uploads/course-ebooks/
       const pdfPath = `uploads/course-ebooks/${Date.now()}_${pdf.name}`
-      await pdf.mv(pdfPath)
+      await new Promise((resolve, reject) => {
+        pdf.mv(pdfPath, (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
       subSection.pdfUrl = `/${pdfPath}`
     }
 
