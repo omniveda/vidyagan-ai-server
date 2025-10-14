@@ -25,11 +25,11 @@ const {
 // Create MCQ - Instructor only
 router.post("/create", auth, isInstructor, createMCQ);
 
-// Get MCQs for a course - Instructor only
-router.get("/course/:courseId", auth, isInstructor, getMCQsByCourse);
+// Get MCQs for a course or subsection - Instructor only
+router.get("/course/:courseId/:subsectionId?", auth, isInstructor, getMCQsByCourse);
 
-// Get MCQs for enrolled students
-router.get("/student/course/:courseId", auth, isStudent, getMCQsForStudent);
+// Get MCQs for enrolled students by course or subsection
+router.get("/student/course/:courseId/:subsectionId?", auth, isStudent, getMCQsForStudent);
 
 // Update MCQ - Instructor only
 router.put("/:mcqId", auth, isInstructor, updateMCQ);
@@ -37,7 +37,7 @@ router.put("/:mcqId", auth, isInstructor, updateMCQ);
 // Delete MCQ - Instructor only
 router.delete("/:mcqId", auth, isInstructor, deleteMCQ);
 
-// Validate student answers and calculate score
-router.post("/validate/:courseId", auth, isStudent, validateAnswers);
+// Validate student answers and calculate score by course or subsection
+router.post("/validate/:courseId/:subsectionId?", auth, isStudent, validateAnswers);
 
 module.exports = router;

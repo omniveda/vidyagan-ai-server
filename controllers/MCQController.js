@@ -6,15 +6,15 @@ const { default: mongoose } = require("mongoose");
 // Create a new MCQ
 exports.createMCQ = async (req, res) => {
   try {
-    const { question, options, correctAnswer, courseId } = req.body;
+    const { question, options, correctAnswer, courseId, subsectionId } = req.body;
     const instructorId = req.user.id;
 
     // Validate required fields
-    if (!question || !options || !Array.isArray(options) || options.length < 2 || 
-        correctAnswer === undefined || !courseId) {
+    if (!question || !options || !Array.isArray(options) || options.length < 2 ||
+        correctAnswer === undefined || !courseId || !subsectionId) {
       return res.status(400).json({
         success: false,
-        message: "All fields are required: question, options (min 2), correctAnswer, courseId"
+        message: "All fields are required: question, options (min 2), correctAnswer, courseId, subsectionId"
       });
     }
 
@@ -48,6 +48,7 @@ exports.createMCQ = async (req, res) => {
       options,
       correctAnswer,
       courseId,
+      subsectionId,
       instructor: instructorId
     });
 
@@ -67,10 +68,10 @@ exports.createMCQ = async (req, res) => {
   }
 };
 
-// Get all MCQs for a course (for instructors)
+// Get all MCQs for a course or subsection (for instructors)
 exports.getMCQsByCourse = async (req, res) => {
   try {
-    const { courseId } = req.params;
+    const { courseId, subsectionId } = req.params;
     const instructorId = req.user.id;
 
     // Check if course exists and user is the instructor
@@ -89,7 +90,13 @@ exports.getMCQsByCourse = async (req, res) => {
       });
     }
 
-    const mcqs = await MCQ.find({ courseId }).sort({ createdAt: -1 });
+    // Build query based on whether subsectionId is provided
+    const query = { courseId };
+    if (subsectionId) {
+      query.subsectionId = subsectionId;
+    }
+
+    const mcqs = await MCQ.find(query).sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -106,10 +113,9 @@ exports.getMCQsByCourse = async (req, res) => {
   }
 };
 
-// Get MCQs for enrolled students
 exports.getMCQsForStudent = async (req, res) => {
   try {
-    const { courseId } = req.params;
+    const { courseId, subsectionId } = req.params;
     const studentId = req.user.id;
 
     // Check if student is enrolled in the course
@@ -132,8 +138,14 @@ exports.getMCQsForStudent = async (req, res) => {
       });
     }
 
+    // Build query based on whether subsectionId is provided
+    const query = { courseId };
+    if (subsectionId) {
+      query.subsectionId = subsectionId;
+    }
+
     // Return MCQs without correct answers for students
-    const mcqs = await MCQ.find({ courseId })
+    const mcqs = await MCQ.find(query)
       .select('-correctAnswer')
       .sort({ createdAt: -1 });
 
@@ -252,7 +264,7 @@ exports.deleteMCQ = async (req, res) => {
 // Validate student answers and calculate score
 exports.validateAnswers = async (req, res) => {
   try {
-    const { courseId } = req.params;
+    const { courseId, subsectionId } = req.params;
     const { answers } = req.body;
     const studentId = req.user.id;
 
@@ -276,8 +288,14 @@ exports.validateAnswers = async (req, res) => {
       });
     }
 
-    // Get all MCQs for the course with correct answers
-    const mcqs = await MCQ.find({ courseId });
+    // Build query based on whether subsectionId is provided
+    const query = { courseId };
+    if (subsectionId) {
+      query.subsectionId = subsectionId;
+    }
+
+    // Get all MCQs for the course or subsection with correct answers
+    const mcqs = await MCQ.find(query);
 
     // Calculate score
     let score = 0;
@@ -286,7 +304,7 @@ exports.validateAnswers = async (req, res) => {
     mcqs.forEach(mcq => {
       const studentAnswer = answers[mcq._id.toString()];
       const isCorrect = studentAnswer === mcq.correctAnswer;
-      
+
       if (isCorrect) {
         score++;
       }
