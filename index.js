@@ -34,7 +34,7 @@ app.use(cookieParser());
 app.use(
   cors({
     // origin: "http://localhost:8080",
-    origin: "https://vidyagan-ai-server.onrender.com",
+    origin: "https://vidyagan-ai-frontend.vercel.app",
     // origin: "https://vidyagan-ai.com",
     // origin: "https://seccouncil.com",
     methods: ["GET", "POST", "PUT", "DELETE"],
